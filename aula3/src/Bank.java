@@ -111,7 +111,46 @@ class Bank {
             l.unlock();
         }
     }
+
+    int closeAccount(int id) throws InvalidAccount{
+        int saldo = 0;
+        l.lock();
+        try{
+            Account c = accounts.get(id);
+            if (c==null) throw new InvalidAccount();
+            saldo = c.balance;
+            accounts.remove(id);
+        }
+        finally {
+            l.unlock();
+        }
+        return saldo;
+    }
 }
+
+    class Closer extends Thread{
+        final int iterations;
+        final Bank b;
+
+        Closer(int iterations,Bank b){
+            this.iterations = iterations;
+            this.b = b;
+        }
+
+        public void run(){
+            Random r = new Random();
+            for (int i = 0; i<iterations;i++){
+                try{
+                    int conta = i;
+                    int c = b.closeAccount(conta);
+                    System.out.println(c);
+                } catch (InvalidAccount invalidAccount) {
+                    invalidAccount.printStackTrace();
+                }
+            }
+        }
+    }
+
 
     class Transferer extends Thread {
         final int iterations;
@@ -175,7 +214,7 @@ class Bank {
                 for (int i = 0; i < iterations; ++i) {
                     int balance = b.totalBalance(todasContas);
                     if (balance != NC * 1000000) {
-                        System.out.println("saldo errado: " + balance);
+                        //System.out.println("saldo errado: " + balance);
                     }
                 }
             } catch (Exception e) {
